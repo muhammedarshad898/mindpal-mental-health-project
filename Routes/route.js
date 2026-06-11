@@ -26,7 +26,7 @@ route.delete('/deleteappo/:appointmentid',jwtmiddleware,rolecheckmiddle(['admin'
 
 // route.get('/searchappo',jwtmiddleware,rolecheckmiddle(['admin']),appointmentcontroller.searchappointment)
 route.post('/payment/create',paypalpaymentcontroller.createPayment)
-route.get('/payment/success',paypalpaymentcontroller.executePayment)
+route.get('/payment/execute',paypalpaymentcontroller.executePayment)
 route.get('/payment/cancel',paypalpaymentcontroller.cancelPayment)
 route.post('/addpost',jwtmiddleware,postcontroller.addpost)
 route.get('/getallpost',jwtmiddleware,postcontroller.getallpost)

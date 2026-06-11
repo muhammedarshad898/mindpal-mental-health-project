@@ -1,9 +1,10 @@
 // paymentController.js
 const paypal = require('../config/payconfig');
 
-//  Create PayPal Payment
-// paymentController.js
+const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
+const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:3000";
 
+//  Create PayPal Payment
 exports.createPayment = async (req, res) => {
   try {
     const { amount } = req.body;
@@ -12,8 +13,8 @@ exports.createPayment = async (req, res) => {
       intent: "sale",
       payer: { payment_method: "paypal" },
       redirect_urls: {
-        return_url: "http://localhost:3000/payment/success",
-        cancel_url: "http://localhost:3000/payment/cancel",
+        return_url: `${BACKEND_URL}/payment/execute`,
+        cancel_url: `${FRONTEND_URL}/payment/cancel`,
       },
       transactions: [
         {
@@ -36,35 +37,28 @@ exports.createPayment = async (req, res) => {
   }
 };
 
-
- 
-
-
+//  Execute PayPal Payment (called by PayPal redirect)
 exports.executePayment = async (req, res) => {
   try {
     const { paymentId, PayerID } = req.query;
 
-    // Check if both paymentId and PayerID exist in the query
     if (!paymentId || !PayerID) {
-      return res.status(400).json({ error: "Invalid payment parameters" });
+      return res.redirect(`${FRONTEND_URL}/payment/cancel`);
     }
 
     paypal.payment.execute(paymentId, { payer_id: PayerID }, (error, payment) => {
       if (error) {
-        return res.status(500).json({ error });
+        return res.redirect(`${FRONTEND_URL}/payment/cancel`);
       } else {
-        // Redirect to frontend success page instead of sending JSON response
-        return res.redirect(`http://localhost:3000/payment/success?paymentId=${paymentId}&PayerID=${PayerID}`);
+        return res.redirect(`${FRONTEND_URL}/payment/success?paymentId=${paymentId}&PayerID=${PayerID}`);
       }
     });
   } catch (error) {
-    res.status(500).json({ error: "Payment execution failed" });
+    res.redirect(`${FRONTEND_URL}/payment/cancel`);
   }
 };
 
-
-
 //  Cancel Payment
 exports.cancelPayment = (req, res) => {
-  res.status(400).json({ message: "Payment cancelled" });
+  res.redirect(`${FRONTEND_URL}/payment/cancel`);
 };
