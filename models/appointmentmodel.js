@@ -32,6 +32,10 @@ const appointmentSchema=new mongoose.Schema({
     time:{
         type:String,
         required:true
+    },
+    condition:{
+        type:String,
+        default:""
     }
 
 })

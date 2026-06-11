@@ -7,18 +7,22 @@ const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:3000";
 //  Create PayPal Payment
 exports.createPayment = async (req, res) => {
   try {
-    const { amount } = req.body;
+    const { amount, doctorid } = req.body;
+
+    if (!amount) {
+      return res.status(400).json({ error: "Amount is required" });
+    }
 
     const paymentJson = {
       intent: "sale",
       payer: { payment_method: "paypal" },
       redirect_urls: {
-        return_url: `${BACKEND_URL}/payment/execute`,
+        return_url: `${BACKEND_URL}/payment/execute?doctorid=${doctorid || ''}`,
         cancel_url: `${FRONTEND_URL}/payment/cancel`,
       },
       transactions: [
         {
-          amount: { total: amount, currency: "USD" },
+          amount: { total: parseFloat(amount).toFixed(2), currency: "USD" },
           description: "Doctor Appointment Payment",
         },
       ],
@@ -26,13 +30,15 @@ exports.createPayment = async (req, res) => {
 
     paypal.payment.create(paymentJson, (error, payment) => {
       if (error) {
-        return res.status(500).json({ error });
+        console.log("PayPal Error:", JSON.stringify(error.response || error, null, 2));
+        return res.status(500).json({ error: error.response || error });
       } else {
         const approvalUrl = payment.links.find((link) => link.rel === "approval_url").href;
         res.json({ approvalUrl });
       }
     });
   } catch (error) {
+    console.log("Payment creation error:", error);
     res.status(500).json({ error: "Payment creation failed" });
   }
 };
@@ -40,7 +46,7 @@ exports.createPayment = async (req, res) => {
 //  Execute PayPal Payment (called by PayPal redirect)
 exports.executePayment = async (req, res) => {
   try {
-    const { paymentId, PayerID } = req.query;
+    const { paymentId, PayerID, doctorid } = req.query;
 
     if (!paymentId || !PayerID) {
       return res.redirect(`${FRONTEND_URL}/payment/cancel`);
@@ -50,6 +56,9 @@ exports.executePayment = async (req, res) => {
       if (error) {
         return res.redirect(`${FRONTEND_URL}/payment/cancel`);
       } else {
+        if (doctorid) {
+          return res.redirect(`${FRONTEND_URL}/booking/${doctorid}?paid=true&paymentId=${paymentId}`);
+        }
         return res.redirect(`${FRONTEND_URL}/payment/success?paymentId=${paymentId}&PayerID=${PayerID}`);
       }
     });

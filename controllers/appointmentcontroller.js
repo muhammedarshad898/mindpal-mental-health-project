@@ -3,7 +3,7 @@ const appointmentmodel = require('../models/appointmentmodel');
 
 exports.doctorappointment = async (req, res) => {
     try {
-        const { name, age, mobile, date, time, doctorid } = req.body;
+        const { name, age, mobile, date, time, doctorid, condition } = req.body;
         const userid = req.payload.userid;
 
         // Convert time to minutes for easy comparison
@@ -36,7 +36,7 @@ exports.doctorappointment = async (req, res) => {
         }
 
      
-        const newappointment = new appointmentmodel({ name, age, mobile, date, time, doctorid, userid });
+        const newappointment = new appointmentmodel({ name, age, mobile, date, time, doctorid, userid, condition });
         await newappointment.save();
 
         return res.status(200).json({ message: "Appointment booked successfully!", appointment: newappointment });
